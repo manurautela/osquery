@@ -33,7 +33,7 @@ namespace osquery {
         // guid, trace_name, keywords may be.
 
         private:
-            friend class SysmonEtwPublisher;
+            friend class SysmonEtwEventPublisher;
     };
 
     /**
@@ -66,8 +66,8 @@ namespace osquery {
     };
 
 
-    using SysmonEtwEventContextRef  = std::shared_ptr<SysmonEtwEventContext>; using
-        SysmonEtwSubscriptionContextRef = std::shared_ptr<SysmonEtwSubscriptionContext>;
+    using SysmonEtwEventContextRef        = std::shared_ptr<SysmonEtwEventContext>;
+    using SysmonEtwSubscriptionContextRef = std::shared_ptr<SysmonEtwSubscriptionContext>;
 
     /**
      * @brief A Windows Event Log Publisher
@@ -82,7 +82,7 @@ namespace osquery {
     class SysmonEtwEventPublisher
         : public EventPublisher<SysmonEtwSubscriptionContext, SysmonEtwEventContext> {
 
-            // DECLARE_PUBLISHER("sysmon_etw");
+            DECLARE_PUBLISHER("sysmon_etw");
 
             public:
             ///
