@@ -56,6 +56,7 @@ function(generateOsqueryEvents)
       windows/windowseventlogpublisher.cpp
       windows/windowseventlogparserservice.cpp
       windows/windowseventlogparser.cpp
+      windows/sysmon_etw.cpp
     )
   endif()
 
@@ -149,6 +150,7 @@ function(generateOsqueryEvents)
       windows/windowseventlogpublisher.h
       windows/windowseventlogparserservice.h
       windows/windowseventlogparser.h
+      windows/sysmon_etw.h
     )
   endif()
 
