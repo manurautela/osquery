@@ -1,0 +1,30 @@
+table_name("sysmon_process_events")
+description("Sysmon Process Create Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("time", BIGINT, "Time of event"),
+    Column("ProcessGuid", TEXT, "ProcessGuid"),
+    Column("ProcessId", TEXT, "Process ID"),
+    Column("FileVersion", TEXT, "FileVersion"),
+    Column("Description", TEXT, "Description"),
+    Column("Product", TEXT, "Product"),
+    Column("Company", TEXT, "Company"),
+    Column("OriginalFileName", TEXT, "OriginalFileName"),
+    Column("CommandLine", TEXT, "CommandLine"),
+    Column("CurrentDirectory", TEXT, "CurrentDirectory"),
+    Column("User", TEXT, "User"),
+    Column("LogonGuid", TEXT, "LogonGuid"),
+    Column("LogonId", TEXT, "LogonId"),
+    Column("TerminalSessionId", TEXT, "TerminalSessionId"),
+    Column("IntegrityLevel", TEXT, "IntegrityLevel", hidden=True),
+    Column("Hashes", TEXT, "Hashes"),
+    Column("ParentProcessGuid", TEXT, "ParentProcessGuid", hidden=True),
+    Column("ParentImage", TEXT, "ParentImage"),
+    Column("ParentCommandLine", TEXT, "ParentCommandLine"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_process_events@SysmonEtwProcessEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_process_events",
+])
