@@ -95,6 +95,7 @@ function(generateOsqueryEvents)
   elseif(DEFINED PLATFORM_WINDOWS)
     target_link_libraries(osquery_events PUBLIC
       plugins_config_parsers
+      tdh.lib
     )
   endif()
 

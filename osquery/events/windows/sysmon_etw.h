@@ -23,68 +23,65 @@ namespace osquery {
      * @brief Subscription details for Sysmon ETW Traces
      *
      * This context is specific to the Sysmon ETW traces.
+     * Different subscribers like process, registry, dns
+     * and others based on task_id of sysmon events may
+     * subscribe and receive the events from publisher.
      */
     struct SysmonEtwSubscriptionContext : public SubscriptionContext {
-        // TODO: This will be based on subscriber type like process events. We
-        // may have a context mentioning what all filters subscriber wishes to
-        // set on the events that we receive from sysmon's etw trace session.
-        // Accordingly we can apply them on the trace session and hand over the
-        // events received via eventcallback back to subscribor.
-        // guid, trace_name, keywords may be.
-
         private:
             friend class SysmonEtwEventPublisher;
     };
 
     /**
-     * @brief Event details for WindowsEventLogEventPublisher events.
+     * @brief Event details for SysmonEtwEventPublisher events.
      *
      * It is the responsibility of the subscriber to understand the best
-     * way in which to parse the event data. The publisher will convert the
-     * Event Log record into a boost::property_tree, and return the tree to
-     * the subscriber for further parsing and row population.
+     * way in which to parse the event data. The publisher will parse
+     * the events and handover to the appropriate subscriber based on
+     * task_id e.g. ProcessCreate, ProcessTerminate, PipeConnected etc.
+     * The subscriber further does use this for row population.
      */
     struct SysmonEtwEventContext : public EventContext {
+        public:
         /// Event Metadata associated with the record
-        unsigned long pid;
+        ULONG pid;
 
-        unsigned short eventId;
+        USHORT eventId;
 
-        unsigned char level;
+        UCHAR level;
 
-        unsigned char channel;
+        UCHAR channel;
 
-        unsigned long long uptime;
+        ULONGLONG uptime;
 
-        unsigned long long timestamp;
+        ULONGLONG timestamp;
 
-        /// Relevant event data
-        std::map<std::string, std::string> eventData;
+        /// event data based on task_id
+        std::map<std::wstring, std::wstring> eventData;
 
         /// GUID associated with the ETW trace provider
         GUID etwProviderGuid;
+        std::string ProviderGuid;
     };
-
 
     using SysmonEtwEventContextRef        = std::shared_ptr<SysmonEtwEventContext>;
     using SysmonEtwSubscriptionContextRef = std::shared_ptr<SysmonEtwSubscriptionContext>;
 
     /**
-     * @brief A Windows Event Log Publisher
+     * @brief A Sysmon Etw Event Log Publisher
      *
-     * This EventPublisher allows EventSubscriber's to subscribe to Sysmon
-     * Etw Logs. Note we create a single trace session for Sysmon and
-     * funnel all the events received back to various subscribors.
-     * Within the publisher run loop, we decide based on event opcode
-     * which subscribor to call to. Then publisher passes on that event
-     * data back to subscribor accordingly.
+     * This EventPublisher allows EventSubscriber's to subscribe to Sysmon Etw
+     * events in real-time. Note we create a single trace session for Sysmon
+     * and pass on events received to appropriate subscribers. Within the
+     * publisher run loop, we decide based on event task_id, which subscribor
+     * to invoke. Then publisher hands over that event to intended subscribor.
      */
     class SysmonEtwEventPublisher
         : public EventPublisher<SysmonEtwSubscriptionContext, SysmonEtwEventContext> {
 
-            DECLARE_PUBLISHER("sysmon_etw");
+            DECLARE_PUBLISHER("SysmonEtwEventPublisher");
 
-            public:
+        public:
             ///
             bool shouldFire(const SysmonEtwSubscriptionContextRef& sc,
                     const SysmonEtwEventContextRef& ec) const override;
@@ -98,14 +95,15 @@ namespace osquery {
 
             static bool WINAPI processEtwRecord(PEVENT_RECORD pEvent);
 
-            private:
-            /// we don't really have multiple traces(session)
-            std::vector<GUID> providerGuids_;
+        private:
 
-            /// Map of trace name, to the GUID/Handle pair for ease of access
-            std::map<std::string, std::pair<GUID, TRACEHANDLE>> etw_handles_;
+            /// Note: we simply maintain a single trace session at publisher side
+            //  TODO: Revisit and see if this can be optmized if needed.
+            TRACEHANDLE sessionHandle_ = { 0 };
+            TRACEHANDLE hTrace_        = { 0 };
+            EVENT_TRACE_PROPERTIES* sessionProperties_;
 
-            public:
+        public:
             // friend class SysmonEtwTests;
         };
 } // namespace osquery
