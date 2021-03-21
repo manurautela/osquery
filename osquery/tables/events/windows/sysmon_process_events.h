@@ -13,13 +13,6 @@
 
 namespace osquery {
 
-using ECRef = SysmonEtwEventContextRef;
-using SCRef = SysmonEtwSubscriptionContextRef;
-
-struct ProcessEventData {
-    uint32_t event_id;
-};
-
 class SysmonEtwProcessEventsSubscriber
 : public EventSubscriber<SysmonEtwEventPublisher> {
     public:
@@ -29,6 +22,6 @@ class SysmonEtwProcessEventsSubscriber
 
         Status Callback(const ECRef& event, const SCRef& subscription);
 
-        static void generateRow(Row& row, const ProcessEventData& event_data);
+        static void generateRow(Row& row, const ECRef& event);
 };
 } // namespace osquery
