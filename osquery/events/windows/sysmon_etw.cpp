@@ -45,7 +45,7 @@ namespace osquery {
     static const GUID sysmon_provider_guid = __uuidof(sysmon_guid_holder);
 
     // This is used to generate unique trace guid at runtime
-    inline GUID random_guid() {
+    inline GUID randomGuid() {
         GUID tmpGuid;
         CoCreateGuid(&tmpGuid);
         return tmpGuid;
@@ -75,7 +75,7 @@ namespace osquery {
         sessionProperties_->LoggerNameOffset = sizeof(EVENT_TRACE_PROPERTIES);
 
         // TODO: should we keep a static GUID
-        sessionProperties_->Wnode.Guid = random_guid();
+        sessionProperties_->Wnode.Guid = randomGuid();
 
         TRACEHANDLE sessionHandle = 0;
         auto status = StartTrace(&sessionHandle, OSQUERY_SYSMON_LOGGER_NAME,sessionProperties_);
@@ -128,7 +128,7 @@ cleanup:
 
     }
 
-    std::string guid_to_string(GUID* guid) {
+    std::string guidToString(GUID* guid) {
         char guid_string[37];
         snprintf(
                 guid_string, sizeof(guid_string),
@@ -141,8 +141,8 @@ cleanup:
         return std::string(guid_string);
     }
 
-    std::string taskid_to_eventname(DWORD task_id) {
-        switch (task_id) {
+    std::string taskidToEventType(DWORD taskId) {
+        switch (taskId) {
             case  1  : return "ProcessCreate";
             case  2  : return "Filecreationtimechanged" ;
             case  3  : return "Networkconnectiondetected" ;
@@ -167,16 +167,18 @@ cleanup:
             case  22 : return "Dnsquery" ;
             case  23 : return "FileDelete" ;
             case  24 : return "Clipboardchanged" ;
+            case  25 : return "ProcessTampering" ;
             default: return "";
         }
     }
 
     bool WINAPI SysmonEtwEventPublisher::processEtwRecord(PEVENT_RECORD pEvent) {
-        /// TODO: this call back is set in user trace created in configure()
-        // Once configured receives the event on the session via sysmon provider
-        // This is the core function which delivers the event to the appropriate
-        // subscriber based on opcode (event type) to either process, image load,
-        // registry or dnsquery subscribor. Passing along the event data on fire()
+        // This call back is set in user trace created in configure() Once
+        // configured receives the event on the session via sysmon provider
+        // This is the core function which delivers the event to the
+        // appropriate subscriber based on opcode (event type) to either
+        // process, image load, registry or dnsquery subscribor. Passing along
+        // the event data on fire()
 
         // Event Header requires no processing
         if (IsEqualGUID(pEvent->EventHeader.ProviderId, EventTraceGuid) &&
@@ -218,14 +220,14 @@ cleanup:
         // Event specific data {event id : value}
         std::map<std::wstring, std::wstring> connDetails;
 
-        EVENT_HEADER event_hdr = pEvent->EventHeader;
-        USHORT task_id  = event_hdr.EventDescriptor.Task;
-        std::string provider_guid = guid_to_string(&event_hdr.ProviderId);
+        EVENT_HEADER eventHdr    = pEvent->EventHeader;
+        USHORT taskId            = eventHdr.EventDescriptor.Task;
+        std::string providerGuid = guidToString(&eventHdr.ProviderId);
 
 #ifdef SYSMON_PRINT_EVENT
         printf("\n\n*****************EVENT RECORD********************\n");
-        printf("provider_guid: %s\n", provider_guid.c_str());
-        printf("task_id: %d task: %s \n", task_id, taskid_to_eventname(task_id).c_str());
+        printf("providerGuid: %s\n", providerGuid.c_str());
+        printf("taskId: %d eventType: %s \n", taskId, taskidToEventType(taskId).c_str());
 #endif
 
         // Iterate over all the property contained in event record and get
@@ -286,9 +288,10 @@ cleanup:
 
         // We leave the parsing of the properties up to the subscriber
         auto ec = createEventContext();
-        ec->eventData = connDetails;
+        ec->eventData       = connDetails;
         ec->etwProviderGuid = pEvent->EventHeader.ProviderId;
-        ec->ProviderGuid  = provider_guid;
+        ec->ProviderGuid    = providerGuid;
+        ec->taskId         = taskId;
 
         ec->pid     = pEvent->EventHeader.ProcessId;
         ec->eventId = pEvent->EventHeader.EventDescriptor.Id;
@@ -312,18 +315,9 @@ cleanup:
         Nanoseconds = (TimeStamp % 10000000) * 100;
         ec->timestamp = Nanoseconds;
 
-        // ProcessCreate invoke the subscriber for the same, we will need an
-        // id(task_id) from subscriber during subscription (via sc). That will
-        // be used to invoke appropriate subscriber. Currently we have a single
-        // subscriber that will receive the intended process create event.
-        // TODO: How do we do when multiple subscribers with diff task-id need
-        // to be invoked.
-        if(task_id == 1) {
-            // Fire event back to subscriber along with Event Context
-            EventFactory::getInstance().fire<SysmonEtwEventPublisher>(ec);
-        }
-
-        //fire(ec);
+        // We do get taskId from subscriber during subscription (via sc). That
+        // will be used to invoke appropriate subscriber during shouldFire().
+        EventFactory::getInstance().fire<SysmonEtwEventPublisher>(ec);
 
         if (info != nullptr) {
             free(info);
@@ -376,8 +370,16 @@ cleanup:
 
     bool SysmonEtwEventPublisher::shouldFire(const SysmonEtwSubscriptionContextRef& sc,
             const SysmonEtwEventContextRef& ec) const {
-        // In our case we always fire the event, provided there is atleast one subscribor
-        return true;
+        // Match the task id in event context with subscriber supplied id
+        
+#if 0
+        printf("moose... sc:%d ec:%d\n", sc->taskId, ec->taskId);
+#endif
+        if (sc->taskId == ec->taskId){
+            return true;
+        }
+
+        return false;
     }
 
 } // namespace osquery

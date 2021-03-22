@@ -19,15 +19,47 @@
 
 namespace osquery {
 
+// #define SYSMON_PRINT_EVENT 0
+
+// Sysmon task id taken from manifest
+#define SysmonProcessCreate                            1
+#define SysmonFilecreationtimechanged                  2
+#define SysmonNetworkconnectiondetected                3
+#define SysmonSysmonservicestatechanged                4
+#define SysmonProcessterminated                        5
+#define SysmonDriverloaded                             6
+#define SysmonImageloaded                              7
+#define SysmonCreateRemoteThreaddetected               8
+#define SysmonRawAccessReaddetected                    9
+#define SysmonProcessaccessed                          10
+#define SysmonFilecreated                              11
+#define SysmonRegistryobjectaddedordeleted             12
+#define SysmonRegistryvalueset                         13
+#define SysmonRegistryobjectrenamed                    14
+#define SysmonFilestreamcreated                        15
+#define SysmonSysmonconfigstatechanged                 16
+#define SysmonPipeCreated                              17
+#define SysmonPipeConnected                            18
+#define SysmonWmiEventFilteractivitydetected           19
+#define SysmonWmiEventConsumeractivitydetected         20
+#define SysmonWmiEventConsumerToFilteractivitydetected 21
+#define SysmonDnsquery                                 22
+#define SysmonFileDelete                               23
+#define SysmonClipboardchanged                         24
+#define SysmonProcessTampering                         25
+
     /**
      * @brief Subscription details for Sysmon ETW Traces
      *
      * This context is specific to the Sysmon ETW traces.
      * Different subscribers like process, registry, dns
-     * and others based on task_id of sysmon events may
+     * and others based on taskId of sysmon events may
      * subscribe and receive the events from publisher.
      */
     struct SysmonEtwSubscriptionContext : public SubscriptionContext {
+        // This will allow publisher to selectively events to subscribers
+        // that they wish to handle
+        USHORT taskId;
         private:
             friend class SysmonEtwEventPublisher;
     };
@@ -38,7 +70,7 @@ namespace osquery {
      * It is the responsibility of the subscriber to understand the best
      * way in which to parse the event data. The publisher will parse
      * the events and handover to the appropriate subscriber based on
-     * task_id e.g. ProcessCreate, ProcessTerminate, PipeConnected etc.
+     * taskId e.g. ProcessCreate, ProcessTerminate, PipeConnected etc.
      * The subscriber further does use this for row population.
      */
     struct SysmonEtwEventContext : public EventContext {
@@ -56,10 +88,11 @@ namespace osquery {
 
         ULONGLONG timestamp;
 
-        /// event data based on task_id
+        /// event data based on taskId
         std::map<std::wstring, std::wstring> eventData;
 
         /// GUID associated with the ETW trace provider
+        USHORT taskId;
         GUID etwProviderGuid;
         std::string ProviderGuid;
     };
@@ -73,7 +106,7 @@ namespace osquery {
      * This EventPublisher allows EventSubscriber's to subscribe to Sysmon Etw
      * events in real-time. Note we create a single trace session for Sysmon
      * and pass on events received to appropriate subscribers. Within the
-     * publisher run loop, we decide based on event task_id, which subscribor
+     * publisher run loop, we decide based on event taskId, which subscribor
      * to invoke. Then publisher hands over that event to intended subscribor.
      */
     class SysmonEtwEventPublisher

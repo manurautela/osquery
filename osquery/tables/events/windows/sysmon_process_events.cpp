@@ -17,14 +17,15 @@
 
 namespace osquery {
 
-    REGISTER(SysmonEtwProcessEventsSubscriber, "event_subscriber", "sysmon_process_events");
+    REGISTER(SysmonEtwProcessEventsSubscriber, "event_subscriber", "sysmon_process_create_events");
 
     Status SysmonEtwProcessEventsSubscriber::init() {
         auto sc = createSubscriptionContext();
+        sc->taskId = SysmonProcessCreate;
 
-        // TODO: We will have to pass on task_id (ProcessCreate), such
-        // that publisher can identify and send only events specific to 
-        // this subscriber. May be name should suffice as well. i.e. sysmon_process_events
+        // TODO: We will have to pass on taskId (ProcessCreate), such
+        // that publisher can identify and send only events specific to
+        // this subscriber. May be name should suffice as well. i.e. sysmon_process_create_events
         subscribe(&SysmonEtwProcessEventsSubscriber::Callback, sc);
 
         return Status::success();
@@ -61,32 +62,6 @@ namespace osquery {
 #ifdef SYSMON_PRINT_EVENT
         printf("xxxxxxxxxxxxxx END: process create event subscriber xxxxxxxxxx.\n");
 #endif
-
-        //  Taken from sysmon manifest file
-        //  <template tid = "ProcessCreate(rule:ProcessCreate)Args_V5">
-        //	<data name = "RuleName" inType = "win:UnicodeString" / >
-        //	<data name = "UtcTime" inType = "win:UnicodeString" / >
-        //	<data name = "ProcessGuid" inType = "win:GUID" / >
-        //	<data name = "ProcessId" inType = "win:UInt32" / >
-        //	<data name = "Image" inType = "win:UnicodeString" / >
-        //	<data name = "FileVersion" inType = "win:UnicodeString" / >
-        //	<data name = "Description" inType = "win:UnicodeString" / >
-        //	<data name = "Product" inType = "win:UnicodeString" / >
-        //	<data name = "Company" inType = "win:UnicodeString" / >
-        //	<data name = "OriginalFileName" inType = "win:UnicodeString" / >
-        //	<data name = "CommandLine" inType = "win:UnicodeString" / >
-        //	<data name = "CurrentDirectory" inType = "win:UnicodeString" / >
-        //	<data name = "User" inType = "win:UnicodeString" / >
-        //	<data name = "LogonGuid" inType = "win:GUID" / >
-        //	<data name = "LogonId" inType = "win:HexInt64" / >
-        //	<data name = "TerminalSessionId" inType = "win:UInt32" / >
-        //	<data name = "IntegrityLevel" inType = "win:UnicodeString" / >
-        //	<data name = "Hashes" inType = "win:UnicodeString" / >
-        //	<data name = "ParentProcessGuid" inType = "win:GUID" / >
-        //	<data name = "ParentProcessId" inType = "win:UInt32" / >
-        //	<data name = "ParentImage" inType = "win:UnicodeString" / >
-        //	<data name = "ParentCommandLine" inType = "win:UnicodeString" / >
-        //</template>
     }
 
     SysmonEtwProcessEventsSubscriber::~SysmonEtwProcessEventsSubscriber(){}
