@@ -303,6 +303,7 @@ function(generateNativeTables)
     "yara/yara_events.table:linux,macos"
     "yara/yara.table:linux,macos,freebsd,windows"
     "windows/sysmon_process_events.table:windows"
+    "windows/sysmon_process_terminate_events.table:windows"
   )
 
   if(OSQUERY_BUILD_BPF)
