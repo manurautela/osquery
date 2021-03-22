@@ -13,12 +13,12 @@
 
 namespace osquery {
 
-class SysmonEtwProcessEventsSubscriber
+class SysmonProcessCreateEventsSubscriber
 : public EventSubscriber<SysmonEtwEventPublisher> {
     public:
         Status init() override;
 
-        virtual ~SysmonEtwProcessEventsSubscriber() override;
+        virtual ~SysmonProcessCreateEventsSubscriber() override;
 
         Status Callback(const ECRef& event, const SCRef& subscription);
 

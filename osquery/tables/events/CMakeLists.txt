@@ -54,7 +54,7 @@ function(generateOsqueryTablesEventsEventstable)
       windows/ntfs_journal_events.cpp
       windows/powershell_events.cpp
       windows/windows_events.cpp
-      windows/sysmon_process_events.cpp
+      windows/sysmon_process_create_events.cpp
       windows/sysmon_process_terminate_events.cpp
     )
   endif()
@@ -113,7 +113,7 @@ function(generateOsqueryTablesEventsEventstable)
       windows/ntfs_journal_events.h
       windows/powershell_events.h
       windows/windows_events.h
-      windows/sysmon_process_events.h
+      windows/sysmon_process_create_events.h
       windows/sysmon_process_terminate_events.h
     )
 

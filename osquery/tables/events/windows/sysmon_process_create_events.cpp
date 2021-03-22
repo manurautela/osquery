@@ -13,25 +13,25 @@
 #include <osquery/utils/conversions/windows/strings.h>
 
 #include <osquery/events/windows/sysmon_etw.h>
-#include <osquery/tables/events/windows/sysmon_process_events.h>
+#include <osquery/tables/events/windows/sysmon_process_create_events.h>
 
 namespace osquery {
 
-    REGISTER(SysmonEtwProcessEventsSubscriber, "event_subscriber", "sysmon_process_create_events");
+    REGISTER(SysmonProcessCreateEventsSubscriber, "event_subscriber", "sysmon_process_create_events");
 
-    Status SysmonEtwProcessEventsSubscriber::init() {
+    Status SysmonProcessCreateEventsSubscriber::init() {
         auto sc = createSubscriptionContext();
         sc->taskId = SysmonProcessCreate;
 
         // TODO: We will have to pass on taskId (ProcessCreate), such
         // that publisher can identify and send only events specific to
         // this subscriber. May be name should suffice as well. i.e. sysmon_process_create_events
-        subscribe(&SysmonEtwProcessEventsSubscriber::Callback, sc);
+        subscribe(&SysmonProcessCreateEventsSubscriber::Callback, sc);
 
         return Status::success();
     }
 
-    Status SysmonEtwProcessEventsSubscriber::Callback(const ECRef& event,
+    Status SysmonProcessCreateEventsSubscriber::Callback(const ECRef& event,
             const SCRef&) {
         //TODO: Add rows in batches to improve performance
         Row row;
@@ -43,7 +43,7 @@ namespace osquery {
 
     }
 
-    void SysmonEtwProcessEventsSubscriber::generateRow(Row& row, const ECRef& event) {
+    void SysmonProcessCreateEventsSubscriber::generateRow(Row& row, const ECRef& event) {
         row = {};
 
 #ifdef SYSMON_PRINT_EVENT
@@ -64,5 +64,5 @@ namespace osquery {
 #endif
     }
 
-    SysmonEtwProcessEventsSubscriber::~SysmonEtwProcessEventsSubscriber(){}
+    SysmonProcessCreateEventsSubscriber::~SysmonProcessCreateEventsSubscriber(){}
 } // namespace osquery
