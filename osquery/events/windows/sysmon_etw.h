@@ -115,7 +115,6 @@ namespace osquery {
             DECLARE_PUBLISHER("SysmonEtwEventPublisher");
 
         public:
-            ///
             bool shouldFire(const SysmonEtwSubscriptionContextRef& sc,
                     const SysmonEtwEventContextRef& ec) const override;
 
@@ -123,18 +122,20 @@ namespace osquery {
 
             void tearDown() override;
 
+            void stopPrevEtwSession();
+
             /// The calling for beginning the thread's run loop.
             Status run() override;
 
             static bool WINAPI processEtwRecord(PEVENT_RECORD pEvent);
+            static DWORD WINAPI sysmonProcessTraceThread(LPVOID param);
 
         private:
+            /// Ensures that all Windows event log subscriptions are removed
+            void stop() override;
 
-            /// Note: we simply maintain a single trace session at publisher side
-            //  TODO: Revisit and see if this can be optmized if needed.
             TRACEHANDLE sessionHandle_ = { 0 };
             TRACEHANDLE hTrace_        = { 0 };
-            EVENT_TRACE_PROPERTIES* sessionProperties_;
 
         public:
             // friend class SysmonEtwTests;

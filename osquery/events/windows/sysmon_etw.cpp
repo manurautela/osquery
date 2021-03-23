@@ -14,12 +14,13 @@
 #include <osquery/logger/logger.h>
 #include <osquery/registry/registry_factory.h>
 
+#include <chrono>
 #include <combaseapi.h>
-
-#define OSQUERY_SYSMON_LOGGER_NAME  L"osquery-sysmon-etw-trace"
 
 
 namespace osquery {
+
+    #define OSQUERY_SYSMON_LOGGER_NAME  L"osquery-sysmon-etw-trace"
 
     REGISTER(SysmonEtwEventPublisher,
             "event_publisher",
@@ -27,12 +28,8 @@ namespace osquery {
 
     const std::string kOsquerySysmonEtwSessionName = "osquery-sysmon-etw-trace";
 
-    static const GUID kOsquerySessionGuid = {
-        0x22377e0a,
-        0x63b0,
-        0x4f43,
-        {0xa8, 0x24, 0x4b, 0x35, 0x54, 0xac, 0x89, 0x85}};
-
+	static const GUID kOsquerySysmonEtwSessionGuid =
+	{ 0x6990501b, 0x4484, 0x4ef0, { 0x87, 0x93, 0x84, 0x15, 0x9b, 0x8d, 0x47, 0x28 } };
 
     // Sysmon etw trace Microsoft-Windows-Sysmon setup
     // Name: Microsoft-Windows-Sysmon
@@ -42,7 +39,7 @@ namespace osquery {
     //
     // Provider guid that we may want to enable on a trace session
     struct __declspec(uuid("{5770385F-C22A-43E0-BF4C-06F5698FFBD9}")) sysmon_guid_holder;
-    static const GUID sysmon_provider_guid = __uuidof(sysmon_guid_holder);
+    static const GUID sysmonProviderGuid = __uuidof(sysmon_guid_holder);
 
     // This is used to generate unique trace guid at runtime
     inline GUID randomGuid() {
@@ -52,42 +49,69 @@ namespace osquery {
     }
 
 
-    void SysmonEtwEventPublisher::configure() {
-        // tearDown();
-
-        // TODO: See if we need any details from subscriber during initial
-        // trace setup. And adjust the trace session accordingly.
-        //for (const auto& sub : subscriptions_) {
-        //  auto sc = getSubscriptionContext(sub->context);
-        //}
-
+    void SysmonEtwEventPublisher::stopPrevEtwSession() {
         // Allocate buffer for session properties of the trace
-        unsigned long buffSize = sizeof(EVENT_TRACE_PROPERTIES) + sizeof(OSQUERY_SYSMON_LOGGER_NAME);
+        PEVENT_TRACE_PROPERTIES sessionProperties = nullptr;
+        std::unique_ptr<BYTE[]> propertiesBuffer;
 
-        auto sessionProperties_ = static_cast<EVENT_TRACE_PROPERTIES*>(malloc(buffSize));
+        ULONG buffSize = sizeof(EVENT_TRACE_PROPERTIES) + sizeof(OSQUERY_SYSMON_LOGGER_NAME);
+        propertiesBuffer = std::make_unique<BYTE[]>(buffSize);
+        ZeroMemory(propertiesBuffer.get(), buffSize);
 
-        ZeroMemory(sessionProperties_, buffSize);
-        sessionProperties_->Wnode.BufferSize = buffSize;
-        sessionProperties_->Wnode.Flags = WNODE_FLAG_TRACED_GUID;
-        sessionProperties_->Wnode.ClientContext = 1;
-        sessionProperties_->LogFileMode = EVENT_TRACE_REAL_TIME_MODE;
-        sessionProperties_->MaximumFileSize = 1;
-        sessionProperties_->LoggerNameOffset = sizeof(EVENT_TRACE_PROPERTIES);
+        sessionProperties = reinterpret_cast<PEVENT_TRACE_PROPERTIES>(propertiesBuffer.get());
 
-        // TODO: should we keep a static GUID
-        sessionProperties_->Wnode.Guid = randomGuid();
+        sessionProperties->MaximumFileSize     = 1;
+        sessionProperties->Wnode.ClientContext = 1;
+        sessionProperties->Wnode.BufferSize    = buffSize;
+        sessionProperties->Wnode.Flags         = WNODE_FLAG_TRACED_GUID;
+        sessionProperties->LogFileMode         = EVENT_TRACE_REAL_TIME_MODE;
+        sessionProperties->LoggerNameOffset    = sizeof(EVENT_TRACE_PROPERTIES);
+        sessionProperties->Wnode.Guid          = kOsquerySysmonEtwSessionGuid;
+
+        auto status = ControlTrace(NULL,
+                OSQUERY_SYSMON_LOGGER_NAME,
+                sessionProperties,
+                EVENT_TRACE_CONTROL_STOP);
+
+        if (status != 0 && status != ERROR_MORE_DATA) {
+            LOG(WARNING) << "Failed to stop trace with " << status;
+        } else {
+            LOG(INFO) << "Stopped the previous trace.";
+        }
+    }
+
+    void SysmonEtwEventPublisher::configure() {
+        // Allocate buffer for session properties of the trace
+        PEVENT_TRACE_PROPERTIES sessionProperties = nullptr;
+        std::unique_ptr<BYTE[]> propertiesBuffer;
+
+        ULONG buffSize = sizeof(EVENT_TRACE_PROPERTIES) + sizeof(OSQUERY_SYSMON_LOGGER_NAME);
+        propertiesBuffer = std::make_unique<BYTE[]>(buffSize);
+        ZeroMemory(propertiesBuffer.get(), buffSize);
+
+        sessionProperties = reinterpret_cast<PEVENT_TRACE_PROPERTIES>(propertiesBuffer.get());
+
+        sessionProperties->MaximumFileSize     = 1;
+        sessionProperties->Wnode.ClientContext = 1;
+        sessionProperties->Wnode.BufferSize    = buffSize;
+        sessionProperties->Wnode.Flags         = WNODE_FLAG_TRACED_GUID;
+        sessionProperties->LogFileMode         = EVENT_TRACE_REAL_TIME_MODE;
+        sessionProperties->LoggerNameOffset    = sizeof(EVENT_TRACE_PROPERTIES);
+        sessionProperties->Wnode.Guid          = kOsquerySysmonEtwSessionGuid;
+
 
         TRACEHANDLE sessionHandle = 0;
-        auto status = StartTrace(&sessionHandle, OSQUERY_SYSMON_LOGGER_NAME,sessionProperties_);
+        auto status = StartTrace(&sessionHandle, OSQUERY_SYSMON_LOGGER_NAME, sessionProperties);
 
         // If the trace already exists, stop it and restart.
         if (status == ERROR_ALREADY_EXISTS) {
             printf("Stopping trace sesson before starting a new one...\n");
-            stop();
+            // May be a better cleanup functio, coz this will interrupt the main thread
+            stopPrevEtwSession();
 
             status = StartTrace((PTRACEHANDLE)&sessionHandle,
                     OSQUERY_SYSMON_LOGGER_NAME,
-                    sessionProperties_);
+                    sessionProperties);
         }
 
         if (sessionHandle == 0) {
@@ -95,50 +119,44 @@ namespace osquery {
             goto cleanup;
         }
 
+        sessionHandle_ = sessionHandle;
+
         // Enable sysmon provider for the trace session created previously.
-        // Such that we can receive the events on the enabled provider emits based
-        // on the trace configuration.
+        // Such that we can receive the events on the enabled provider emits
+        // based on the trace configuration.
         ENABLE_TRACE_PARAMETERS parameters;
         ZeroMemory(&parameters, sizeof(parameters));
 
-        parameters.ControlFlags = 0;
-        parameters.Version = ENABLE_TRACE_PARAMETERS_VERSION_2;
-        parameters.SourceId = sysmon_provider_guid;
+        parameters.ControlFlags     = 0;
+        parameters.Version          = ENABLE_TRACE_PARAMETERS_VERSION_2;
+        parameters.SourceId         = sysmonProviderGuid;
         parameters.EnableFilterDesc = nullptr;
-        parameters.FilterDescCount = 0;
+        parameters.FilterDescCount  = 0;
 
         printf("Enabling Sysmon provider...\n");
-        status = EnableTraceEx2(sessionHandle, &sysmon_provider_guid,
+        status = EnableTraceEx2(sessionHandle, &sysmonProviderGuid,
                 EVENT_CONTROL_CODE_ENABLE_PROVIDER, TRACE_LEVEL_INFORMATION,
                 0, 0, 0, &parameters);
         if (status != ERROR_SUCCESS) {
             printf("EnableTraceEx2() failed with %d\n", status);
         }
 
-        sessionHandle_ = sessionHandle;
 
 cleanup:
         printf("Sysmon Etw Publisher setup done...\n");
-
-#if 0
-        if (sessionProperties != nullptr) {
-            free(sessionProperties);
-        }
-#endif
-
     }
 
     std::string guidToString(GUID* guid) {
-        char guid_string[37];
+        char guidStr[37];
         snprintf(
-                guid_string, sizeof(guid_string),
+                guidStr, sizeof(guidStr),
                 "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
                 guid->Data1, guid->Data2, guid->Data3,
                 guid->Data4[0], guid->Data4[1], guid->Data4[2],
                 guid->Data4[3], guid->Data4[4], guid->Data4[5],
                 guid->Data4[6], guid->Data4[7]);
 
-        return std::string(guid_string);
+        return std::string(guidStr);
     }
 
     std::string taskidToEventType(DWORD taskId) {
@@ -172,6 +190,7 @@ cleanup:
         }
     }
 
+
     bool WINAPI SysmonEtwEventPublisher::processEtwRecord(PEVENT_RECORD pEvent) {
         // This call back is set in user trace created in configure() Once
         // configured receives the event on the session via sysmon provider
@@ -179,6 +198,17 @@ cleanup:
         // appropriate subscriber based on opcode (event type) to either
         // process, image load, registry or dnsquery subscribor. Passing along
         // the event data on fire()
+
+
+
+#if 0
+        // Let's check if publisher is going down...if yes let's just end this
+        auto pubref = EventFactory::getEventPublisher(std::string("SysmonEtwEventPublisher"));
+        if (pubref->isEnding()) {
+            printf("Event publisher ending...bail out.\n");
+            return false;
+        }
+#endif
 
         // Event Header requires no processing
         if (IsEqualGUID(pEvent->EventHeader.ProviderId, EventTraceGuid) &&
@@ -291,7 +321,7 @@ cleanup:
         ec->eventData       = connDetails;
         ec->etwProviderGuid = pEvent->EventHeader.ProviderId;
         ec->ProviderGuid    = providerGuid;
-        ec->taskId         = taskId;
+        ec->taskId          = taskId;
 
         ec->pid     = pEvent->EventHeader.ProcessId;
         ec->eventId = pEvent->EventHeader.EventDescriptor.Id;
@@ -323,17 +353,39 @@ cleanup:
             free(info);
         }
 
+        // This is one way to close and return from blocking ProcessTrace
+        if (ERROR_SUCCESS != status || NULL == pUserData)
+        {
+            printf("processEtwRecord returned %d\n", status);
+            return false;
+        }
+
         return true;
     }
 
+    // ProcessTrace() is a blocking api, creating this thread stub helps return
+    // in the event publisher run loop
+    DWORD SysmonEtwEventPublisher::sysmonProcessTraceThread(LPVOID param) {
+        // Grab sysmon trace handle opened in configure and run.
+        TRACEHANDLE htraceSysmon = *(TRACEHANDLE*)param;
+
+        auto status = ProcessTrace(&htraceSysmon, 1, 0, 0);
+        if (status != ERROR_SUCCESS && status != ERROR_CANCELLED) {
+            return status;
+        }
+
+        return ERROR_SUCCESS;
+    }
+
     Status SysmonEtwEventPublisher::run() {
-        // setup the callback function for EVENT_RECORD to processEtwRecord
+        // Setup the callback function for EVENT_RECORD to processEtwRecord
         printf("Starting SysmonEtwEventPublisher run loop...\n");
         EVENT_TRACE_LOGFILE trace;
         ZeroMemory(&trace, sizeof(EVENT_TRACE_LOGFILE));
-        trace.LogFileName = nullptr;
-        trace.LoggerName = OSQUERY_SYSMON_LOGGER_NAME; // Enabling sysmon provider into the trace
-        trace.EventCallback = (PEVENT_CALLBACK)processEtwRecord;
+
+        trace.LogFileName      = nullptr;
+        trace.LoggerName       = OSQUERY_SYSMON_LOGGER_NAME;
+        trace.EventCallback    = (PEVENT_CALLBACK)processEtwRecord;
         trace.ProcessTraceMode = PROCESS_TRACE_MODE_EVENT_RECORD | PROCESS_TRACE_MODE_REAL_TIME;
 
         hTrace_ = OpenTrace(&trace);
@@ -343,35 +395,43 @@ cleanup:
                     std::to_string(GetLastError()));
         }
 
-        // Process the trace in realtime indefinitely
-        auto status = ProcessTrace(&hTrace_, 1, 0, 0);
-        if (status != ERROR_SUCCESS && status != ERROR_CANCELLED) {
-            return Status(1, "Failed to process trace with " + std::to_string(status));
+        DWORD tidTracer;
+        printf("Creating Process tracer thread.\n");
+        HANDLE hthreadTracer = CreateThread(0, 0, sysmonProcessTraceThread, (LPVOID)&hTrace_, 0, &tidTracer);
+        CloseHandle(hthreadTracer);
+
+        while(!isEnding()) {
+            // TODO: Batch event lists here and thus put lesser pressure on
+            // rocskdb and use addBatch() at subscriber side
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
+
         return Status::success();
     }
 
 
+    void SysmonEtwEventPublisher::stop() {
+        stopPrevEtwSession();
+    }
+
     void SysmonEtwEventPublisher::tearDown() {
         // Cleanup any subscriber specific context here
+
         if (hTrace_) {
             ::CloseTrace(hTrace_);
             hTrace_ = 0;
         }
-        if (sessionHandle_) {
-            ::StopTrace(sessionHandle_, OSQUERY_SYSMON_LOGGER_NAME, sessionProperties_);
-            sessionHandle_ = 0;
-        }
 
-        if(sessionProperties_ != nullptr) {
-            free(sessionProperties_);
+        printf("SysmonEtwPublisher tearDown() isEnding: %s\n", isEnding() ? "true" : "false");
+        if (isEnding()) {
+            stopPrevEtwSession();
         }
     }
 
     bool SysmonEtwEventPublisher::shouldFire(const SysmonEtwSubscriptionContextRef& sc,
             const SysmonEtwEventContextRef& ec) const {
         // Match the task id in event context with subscriber supplied id
-        
+
 #if 0
         printf("moose... sc:%d ec:%d\n", sc->taskId, ec->taskId);
 #endif
