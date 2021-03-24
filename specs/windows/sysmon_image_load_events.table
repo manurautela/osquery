@@ -1,0 +1,25 @@
+table_name("sysmon_image_load_events")
+description("Sysmon Image Loaded Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("ProcessGuid", TEXT, "ProcessGuid"),
+    Column("ProcessId", TEXT, "Process ID"),
+    Column("Image", TEXT, "Image"),
+    Column("ImageLoaded", TEXT, "Image"),
+    Column("FileVersion", TEXT, "FileVersion"),
+    Column("Description", TEXT, "Description"),
+    Column("Product", TEXT, "Product"),
+    Column("Company", TEXT, "Company"),
+    Column("OriginalFileName", TEXT, "OriginalFileName"),
+    Column("Hashes", TEXT, "Hashes"),
+    Column("Signed", TEXT, "Signed"),
+    Column("Signature", TEXT, "Signature"),
+    Column("SignatureStatus", TEXT, "SignatureStatus"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_image_load_events@SysmonEtwImageLoadEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_image_load_events",
+])
