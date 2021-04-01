@@ -1,0 +1,15 @@
+table_name("sysmon_service_state_events")
+description("Sysmon Service State Change Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("State", TEXT, "State"),
+    Column("Version", TEXT, "Version"),
+    Column("SchemaVersion", TEXT, "SchemaVersion"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_service_state_events@SysmonEtwServiceStateEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_service_state_events",
+])
