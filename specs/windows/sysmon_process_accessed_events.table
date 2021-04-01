@@ -1,0 +1,21 @@
+table_name("sysmon_process_accessed_events")
+description("Sysmon Process Accessed Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("SourceProcessGUID", TEXT, "SourceProcessGUID"),
+    Column("SourceProcessId", TEXT, "Source Process ID"),
+    Column("SourceThreadId", TEXT, "Source Thread ID"),
+    Column("SourceImage", TEXT, "Source Image"),
+    Column("TargetProcessGuid", TEXT, "TargetProcessGuid"),
+    Column("TargetProcessId", TEXT, "TargetProcessId"),
+    Column("TargetImage", TEXT, "TargetImage"),
+    Column("GrantedAccess", TEXT, "GrantedAccess"),
+    Column("CallTrace", TEXT, "CallTrace"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_process_accessed_events@SysmonEtwProcessAccessedEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_process_accessed_events",
+])

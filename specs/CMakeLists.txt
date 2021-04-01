@@ -310,6 +310,7 @@ function(generateNativeTables)
     "windows/sysmon_service_state_events.table:windows"
     "windows/sysmon_driver_loaded_events.table:windows"
     "windows/sysmon_remote_thread_events.table:windows"
+    "windows/sysmon_process_accessed_events.table:windows"
   )
 
   if(OSQUERY_BUILD_BPF)
