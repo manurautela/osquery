@@ -305,6 +305,7 @@ function(generateNativeTables)
     "windows/sysmon_process_create_events.table:windows"
     "windows/sysmon_process_terminate_events.table:windows"
     "windows/sysmon_image_load_events.table:windows"
+    "windows/sysmon_dnsquery_events.table:windows"
   )
 
   if(OSQUERY_BUILD_BPF)

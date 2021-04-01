@@ -1,0 +1,18 @@
+table_name("sysmon_dnsquery_events")
+description("Sysmon Dnsquery Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("ProcessGuid", TEXT, "ProcessGuid"),
+    Column("ProcessId", TEXT, "Process ID"),
+    Column("QueryName", TEXT, "QueryName"),
+    Column("QueryStatus", TEXT, "QueryStatus"),
+    Column("QueryResults", TEXT, "QueryResults"),
+    Column("Image", TEXT, "Image"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_dnsquery_events@SysmonEtwDnsqueryEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_dnsquery_events",
+])
