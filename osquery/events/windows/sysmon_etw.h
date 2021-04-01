@@ -25,7 +25,7 @@ namespace osquery {
 #define SysmonProcessCreate                            1
 #define SysmonFilecreationtimechanged                  2
 #define SysmonNetworkconnectiondetected                3
-#define SysmonSysmonservicestatechanged                4
+#define Sysmonservicestatechanged                      4
 #define SysmonProcessterminated                        5
 #define SysmonDriverloaded                             6
 #define SysmonImageloaded                              7
@@ -37,7 +37,7 @@ namespace osquery {
 #define SysmonRegistryvalueset                         13
 #define SysmonRegistryobjectrenamed                    14
 #define SysmonFilestreamcreated                        15
-#define SysmonSysmonconfigstatechanged                 16
+#define Sysmonconfigstatechanged                       16
 #define SysmonPipeCreated                              17
 #define SysmonPipeConnected                            18
 #define SysmonWmiEventFilteractivitydetected           19

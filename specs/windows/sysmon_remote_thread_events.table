@@ -1,0 +1,22 @@
+table_name("sysmon_remote_thread_events")
+description("Sysmon Remote Thread Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("SourceProcessGuid", TEXT, "SourceProcessGuid"),
+    Column("SourceProcessId", TEXT, "Source Process ID"),
+    Column("SourceImage", TEXT, "Source Image"),
+    Column("TargetProcessGuid", TEXT, "TargetProcessGuid"),
+    Column("TargetProcessId", TEXT, "TargetProcessId"),
+    Column("TargetImage", TEXT, "TargetImage"),
+    Column("NewThreadId", TEXT, "NewThreadId"),
+    Column("StartAddress", TEXT, "StartAddress"),
+    Column("StartModule", TEXT, "StartModule"),
+    Column("StartFunction", TEXT, "StartFunction"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_remote_thread_events@SysmonEtwRemoteThreadEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_remote_thread_events",
+])
