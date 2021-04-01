@@ -1,0 +1,18 @@
+table_name("sysmon_driver_loaded_events")
+description("Sysmon Driver Loaded Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("ImageLoaded", TEXT, "Image"),
+    Column("Hashes", TEXT, "Hashes"),
+    Column("Signed", TEXT, "Signed"),
+    Column("Signature", TEXT, "Signature"),
+    Column("SignatureStatus", TEXT, "SignatureStatus"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_driver_loaded_events@SysmonEtwDriverLoadedEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_driver_loaded_events",
+])
+

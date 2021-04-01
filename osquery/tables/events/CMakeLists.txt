@@ -60,6 +60,7 @@ function(generateOsqueryTablesEventsEventstable)
       windows/sysmon_dnsquery_events.cpp
       windows/sysmon_network_connection_events.cpp
       windows/sysmon_service_state_events.cpp
+      windows/sysmon_driver_loaded_events.cpp
     )
   endif()
 
@@ -123,6 +124,7 @@ function(generateOsqueryTablesEventsEventstable)
       windows/sysmon_dnsquery_events.h
       windows/sysmon_network_connection_events.h
       windows/sysmon_service_state_events.h
+      windows/sysmon_driver_loaded_events.h
     )
 
     generateIncludeNamespace(osquery_tables_events_eventstable "osquery/tables/events" "FULL_PATH" ${platform_public_header_files})
