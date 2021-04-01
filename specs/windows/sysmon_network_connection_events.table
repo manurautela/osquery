@@ -1,0 +1,28 @@
+table_name("sysmon_network_connection_events")
+description("Sysmon Network Connection Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("ProcessGuid", TEXT, "ProcessGuid"),
+    Column("ProcessId", TEXT, "Process ID"),
+    Column("Image", TEXT, "Image"),
+    Column("User", TEXT, "User"),
+    Column("Protocol", TEXT, "Protocol"),
+    Column("Initiated", TEXT, "Initiated"),
+    Column("SourceIsIpv6", TEXT, "SourceIsIpv6"),
+    Column("SourceIp", TEXT, "SourceIp"),
+    Column("SourceHostname", TEXT, "SourceHostname"),
+    Column("SourcePort", TEXT, "SourcePort"),
+    Column("SourcePortName", TEXT, "SourcePortName"),
+    Column("DestinationIsIpv6", TEXT, "DestinationIsIpv6"),
+    Column("DestinationIp", TEXT, "DestinationIp"),
+    Column("DestinationHostname", TEXT, "DestinationHostname"),
+    Column("DestinationPort", TEXT, "DestinationPort"),
+    Column("DestinationPortName", TEXT, "DestinationPortName"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_network_connection_events@SysmonEtwNetworkConnectionEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_network_connection_events",
+])
