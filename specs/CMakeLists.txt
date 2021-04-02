@@ -312,6 +312,7 @@ function(generateNativeTables)
     "windows/sysmon_remote_thread_events.table:windows"
     "windows/sysmon_process_accessed_events.table:windows"
     "windows/sysmon_file_created_events.table:windows"
+    "windows/sysmon_registry_object_add_delete_events.table:windows"
   )
 
   if(OSQUERY_BUILD_BPF)
