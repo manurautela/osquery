@@ -1,5 +1,5 @@
 table_name("sysmon_wmievent_consumer_events")
-description("Sysmon Pipe Created Event.")
+description("Sysmon WMI Event Consumer Event.")
 schema([
     Column("RuleName", TEXT, "RuleName"),
     Column("time", BIGINT, "Time of event"),
