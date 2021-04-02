@@ -1,0 +1,18 @@
+table_name("sysmon_registry_valueset_events")
+description("Sysmon Registry Valueset Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("EventType", TEXT, "Event Type"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("ProcessGuid", TEXT, "ProcessGuid"),
+    Column("ProcessId", TEXT, "Process ID"),
+    Column("Image", TEXT, "Image"),
+    Column("TargetObject", TEXT, "TargetObject"),
+    Column("Details", TEXT, "Details"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_registry_valueset_events@SysmonEtwRegistryValuesetEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_registry_valueset_events",
+])
