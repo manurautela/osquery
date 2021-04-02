@@ -1,0 +1,17 @@
+table_name("sysmon_file_created_events")
+description("Sysmon File Created Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("ProcessGuid", TEXT, "ProcessGuid"),
+    Column("ProcessId", TEXT, "Process ID"),
+    Column("Image", TEXT, "Image"),
+    Column("TargetFilename", TEXT, "TargetFilename"),
+    Column("CreationUtcTime", TEXT, "CreationUtcTime"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_file_created_events@SysmonEtwFileCreatedEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_file_created_events",
+])
