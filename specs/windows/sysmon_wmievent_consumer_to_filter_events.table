@@ -1,0 +1,17 @@
+table_name("sysmon_wmievent_consumer_to_filter_events")
+description("Sysmon Pipe Created Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("EventType", TEXT, "Event Type"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("Operation", TEXT, "Operation"),
+    Column("User", TEXT, "User"),
+    Column("Consumer", TEXT, "Consumer"),
+    Column("Filter", TEXT, "Filter"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_wmievent_consumer_to_filter_events@SysmonEtwWmiEventConsumerToFilterEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_wmievent_consumer_to_filter_events",
+])

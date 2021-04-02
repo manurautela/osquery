@@ -321,6 +321,7 @@ function(generateNativeTables)
     "windows/sysmon_file_delete_events.table:windows"
     "windows/sysmon_wmievent_filtering_events.table:windows"
     "windows/sysmon_wmievent_consumer_events.table:windows"
+    "windows/sysmon_wmievent_consumer_to_filter_events.table:windows"
   )
 
   if(OSQUERY_BUILD_BPF)
