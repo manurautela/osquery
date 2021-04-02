@@ -1,0 +1,16 @@
+table_name("sysmon_raw_access_read_events")
+description("Sysmon Raw Access Read Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("ProcessGuid", TEXT, "ProcessGuid"),
+    Column("ProcessId", TEXT, "Process ID"),
+    Column("Image", TEXT, "Image"),
+    Column("Device", TEXT, "Device"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_raw_access_read_events@SysmonEtwRawAccessReadEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_raw_access_read_events",
+])
