@@ -323,6 +323,7 @@ function(generateNativeTables)
     "windows/sysmon_wmievent_consumer_events.table:windows"
     "windows/sysmon_wmievent_consumer_to_filter_events.table:windows"
     "windows/sysmon_clipboard_events.table:windows"
+    "windows/sysmon_process_tampering_events.table:windows"
   )
 
   if(OSQUERY_BUILD_BPF)

@@ -1,0 +1,16 @@
+table_name("sysmon_process_tampering_events")
+description("Sysmon Process Tampering Event.")
+schema([
+    Column("RuleName", TEXT, "RuleName"),
+    Column("time", BIGINT, "Time of event"),
+    Column("UtcTime", TEXT, "Time of event"),
+    Column("ProcessGuid", TEXT, "ProcessGuid"),
+    Column("ProcessId", TEXT, "Process ID"),
+    Column("Image", TEXT, "Image"),
+    Column("Type", TEXT, "Type"),
+])
+attributes(event_subscriber=True)
+implementation("sysmon_process_tampering_events@SysmonEtwProcessTamperingEventsSubscriber::genTable")
+examples([
+  "select * from sysmon_process_tampering_events",
+])
