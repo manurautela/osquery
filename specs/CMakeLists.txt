@@ -319,6 +319,7 @@ function(generateNativeTables)
     "windows/sysmon_pipe_created_events.table:windows"
     "windows/sysmon_pipe_connected_events.table:windows"
     "windows/sysmon_file_delete_events.table:windows"
+    "windows/sysmon_wmievent_filtering_events.table:windows"
   )
 
   if(OSQUERY_BUILD_BPF)
