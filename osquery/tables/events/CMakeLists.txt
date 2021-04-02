@@ -74,6 +74,7 @@ function(generateOsqueryTablesEventsEventstable)
       windows/sysmon_wmievent_filtering_events.cpp
       windows/sysmon_wmievent_consumer_events.cpp
       windows/sysmon_wmievent_consumer_to_filter_events.cpp
+      windows/sysmon_clipboard_events.cpp
     )
   endif()
 
@@ -151,6 +152,7 @@ function(generateOsqueryTablesEventsEventstable)
       windows/sysmon_wmievent_filtering_events.h
       windows/sysmon_wmievent_consumer_events.h
       windows/sysmon_wmievent_consumer_to_filter_events.h
+      windows/sysmon_clipboard_events.h
     )
 
     generateIncludeNamespace(osquery_tables_events_eventstable "osquery/tables/events" "FULL_PATH" ${platform_public_header_files})
