@@ -316,6 +316,7 @@ function(generateNativeTables)
     "windows/sysmon_registry_valueset_events.table:windows"
     "windows/sysmon_registry_renamed_events.table:windows"
     "windows/sysmon_filestream_created_events.table:windows"
+    "windows/sysmon_pipe_created_events.table:windows"
   )
 
   if(OSQUERY_BUILD_BPF)

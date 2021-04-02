@@ -68,6 +68,7 @@ function(generateOsqueryTablesEventsEventstable)
       windows/sysmon_registry_valueset_events.cpp
       windows/sysmon_registry_renamed_events.cpp
       windows/sysmon_filestream_created_events.cpp
+      windows/sysmon_pipe_created_events.cpp
     )
   endif()
 
@@ -139,6 +140,7 @@ function(generateOsqueryTablesEventsEventstable)
       windows/sysmon_registry_valueset_events.h
       windows/sysmon_registry_renamed_events.h
       windows/sysmon_filestream_created_events.h
+      windows/sysmon_pipe_created_events.h
     )
 
     generateIncludeNamespace(osquery_tables_events_eventstable "osquery/tables/events" "FULL_PATH" ${platform_public_header_files})
